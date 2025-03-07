@@ -21,13 +21,11 @@ import SpeakStopIcon from "../icons/speak-stop.svg";
 import LoadingIcon from "../icons/three-dots.svg";
 import LoadingButtonIcon from "../icons/loading.svg";
 import PromptIcon from "../icons/prompt.svg";
-import MaskIcon from "../icons/mask.svg";
 import MaxIcon from "../icons/max.svg";
 import MinIcon from "../icons/min.svg";
 import ResetIcon from "../icons/reload.svg";
 import ReloadIcon from "../icons/reload.svg";
 import BreakIcon from "../icons/break.svg";
-import SettingsIcon from "../icons/chat-settings.svg";
 import DeleteIcon from "../icons/clear.svg";
 import PinIcon from "../icons/pin.svg";
 import ConfirmIcon from "../icons/confirm.svg";
@@ -40,7 +38,6 @@ import DarkIcon from "../icons/dark.svg";
 import AutoIcon from "../icons/auto.svg";
 import BottomIcon from "../icons/bottom.svg";
 import StopIcon from "../icons/pause.svg";
-import RobotIcon from "../icons/robot.svg";
 import SizeIcon from "../icons/size.svg";
 import QualityIcon from "../icons/hd.svg";
 import StyleIcon from "../icons/palette.svg";
@@ -125,6 +122,7 @@ import { getModelProvider } from "../utils/model";
 import { RealtimeChat } from "@/app/components/realtime-chat";
 import clsx from "clsx";
 import { getAvailableClientsCount, isMcpEnabled } from "../mcp/actions";
+import { UserPromptModal } from "./settings";
 
 const localStorage = safeLocalStorage();
 
@@ -613,14 +611,13 @@ export function ChatActions(props: {
             icon={<BottomIcon />}
           />
         )}
-        {props.hitBottom && (
+        {/* {props.hitBottom && (
           <ChatAction
             onClick={props.showPromptModal}
             text={Locale.Chat.InputActions.Settings}
             icon={<SettingsIcon />}
           />
-        )}
-
+        )} */}
         {showUploadImage && (
           <ChatAction
             onClick={props.uploadImage}
@@ -643,21 +640,18 @@ export function ChatActions(props: {
             </>
           }
         />
-
         <ChatAction
           onClick={props.showPromptHints}
           text={Locale.Chat.InputActions.Prompt}
           icon={<PromptIcon />}
         />
-
-        <ChatAction
+        {/* <ChatAction
           onClick={() => {
             navigate(Path.Masks);
           }}
           text={Locale.Chat.InputActions.Masks}
           icon={<MaskIcon />}
-        />
-
+        /> */}
         <ChatAction
           text={Locale.Chat.InputActions.Clear}
           icon={<BreakIcon />}
@@ -672,13 +666,11 @@ export function ChatActions(props: {
             });
           }}
         />
-
-        <ChatAction
+        {/* <ChatAction
           onClick={() => setShowModelSelector(true)}
           text={currentModelName}
           icon={<RobotIcon />}
-        />
-
+        /> */}
         {showModelSelector && (
           <Selector
             defaultSelectedValue={`${currentModel}@${currentProviderName}`}
@@ -713,7 +705,6 @@ export function ChatActions(props: {
             }}
           />
         )}
-
         {supportsCustomSize(currentModel) && (
           <ChatAction
             onClick={() => setShowSizeSelector(true)}
@@ -721,7 +712,6 @@ export function ChatActions(props: {
             icon={<SizeIcon />}
           />
         )}
-
         {showSizeSelector && (
           <Selector
             defaultSelectedValue={currentSize}
@@ -740,7 +730,6 @@ export function ChatActions(props: {
             }}
           />
         )}
-
         {isDalle3(currentModel) && (
           <ChatAction
             onClick={() => setShowQualitySelector(true)}
@@ -748,7 +737,6 @@ export function ChatActions(props: {
             icon={<QualityIcon />}
           />
         )}
-
         {showQualitySelector && (
           <Selector
             defaultSelectedValue={currentQuality}
@@ -767,7 +755,6 @@ export function ChatActions(props: {
             }}
           />
         )}
-
         {isDalle3(currentModel) && (
           <ChatAction
             onClick={() => setShowStyleSelector(true)}
@@ -775,7 +762,6 @@ export function ChatActions(props: {
             icon={<StyleIcon />}
           />
         )}
-
         {showStyleSelector && (
           <Selector
             defaultSelectedValue={currentStyle}
@@ -794,7 +780,6 @@ export function ChatActions(props: {
             }}
           />
         )}
-
         {showPlugins(currentProviderName, currentModel) && (
           <ChatAction
             onClick={() => {
@@ -824,7 +809,6 @@ export function ChatActions(props: {
             }}
           />
         )}
-
         {!isMobileScreen && (
           <ChatAction
             onClick={() => props.setShowShortcutKeyModal(true)}
@@ -1600,6 +1584,10 @@ function _Chat() {
   // 快捷键 shortcut keys
   const [showShortcutKeyModal, setShowShortcutKeyModal] = useState(false);
 
+  // 更新提示词 modal 的 message
+  const [updatePromptModalMessage, setUpdatePromptModalMessage] =
+    useState<string>();
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // 打开新聊天 command + shift + o
@@ -1913,6 +1901,16 @@ function _Chat() {
                                           )
                                         }
                                       />
+                                      <ChatAction
+                                        text={"更新提示词"}
+                                        icon={<ExportIcon />}
+                                        onClick={() => {
+                                          setUpdatePromptModalMessage(
+                                            getMessageTextContent(message),
+                                          );
+                                        }}
+                                      />
+
                                       {config.ttsConfig.enable && (
                                         <ChatAction
                                           text={
@@ -2026,7 +2024,6 @@ function _Chat() {
                               <audio src={message.audio_url} controls />
                             </div>
                           )}
-
                           <div className={styles["chat-message-action-date"]}>
                             {isContext
                               ? Locale.Chat.IsContext
@@ -2159,6 +2156,13 @@ function _Chat() {
 
       {showShortcutKeyModal && (
         <ShortcutKeyModal onClose={() => setShowShortcutKeyModal(false)} />
+      )}
+
+      {updatePromptModalMessage && (
+        <UserPromptModal
+          onClose={() => setUpdatePromptModalMessage(undefined)}
+          newPrompt={updatePromptModalMessage}
+        />
       )}
     </>
   );

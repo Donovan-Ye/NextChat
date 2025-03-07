@@ -138,7 +138,10 @@ function EditPromptModal(props: { id: string; onClose: () => void }) {
   ) : null;
 }
 
-function UserPromptModal(props: { onClose?: () => void }) {
+export function UserPromptModal(props: {
+  onClose?: () => void;
+  newPrompt?: string;
+}) {
   const promptStore = usePromptStore();
   const userPrompts = promptStore.getUserPrompts();
   const builtinPrompts = SearchService.builtinPrompts;
@@ -226,6 +229,26 @@ function UserPromptModal(props: { onClose?: () => void }) {
                     className={styles["user-prompt-button"]}
                     onClick={() => copyToClipboard(v.content)}
                   />
+                  {props.newPrompt && (
+                    <IconButton
+                      icon={<ResetIcon />}
+                      className={styles["user-prompt-button"]}
+                      onClick={() => {
+                        const newContent = props.newPrompt;
+                        if (newContent) {
+                          promptStore.updatePrompt(v.id!, (prompt) => {
+                            prompt.content = newContent;
+                          });
+                        }
+                        showToast("更新成功", {
+                          text: "关闭",
+                          onClick: () => {
+                            props.onClose?.();
+                          },
+                        });
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             ))}
@@ -1757,7 +1780,6 @@ export function Settings() {
               }
             ></input>
           </ListItem>
-
           <ListItem
             title={Locale.Settings.Prompt.List}
             subTitle={Locale.Settings.Prompt.ListCount(

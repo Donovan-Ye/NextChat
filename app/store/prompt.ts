@@ -179,10 +179,22 @@ export const usePromptStore = createPersistStore(
 
           const allPromptsForSearch = builtinPrompts
             .reduce((pre, cur) => pre.concat(cur), [])
-            .filter((v) => !!v.title && !!v.content);
+            .filter((v) => !!v.title && !!v.content)
+            .map((v) => ({ ...v, isUser: true }));
           SearchService.count.builtin =
             res.en.length + res.cn.length + res.tw.length;
-          SearchService.init(allPromptsForSearch, userPrompts);
+
+          const finalPrompts = [...allPromptsForSearch, ...userPrompts];
+          SearchService.init([], finalPrompts);
+          usePromptStore.setState({
+            prompts: finalPrompts.reduce(
+              (pre, cur) => {
+                pre[cur.id] = cur;
+                return pre;
+              },
+              {} as Record<string, Prompt>,
+            ),
+          });
         });
     },
   },
