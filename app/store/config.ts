@@ -64,8 +64,8 @@ export const DEFAULT_CONFIG = {
   models: DEFAULT_MODELS as any as LLMModel[],
 
   modelConfig: {
-    model: "gpt-4o-mini" as ModelType,
-    providerName: "OpenAI" as ServiceProvider,
+    model: "deepseek-r1-250120" as ModelType,
+    providerName: "DeepSeek" as ServiceProvider,
     temperature: 0.5,
     top_p: 1,
     max_tokens: 4000,
