@@ -1,7 +1,6 @@
 import Fuse from "fuse.js";
 import { nanoid } from "nanoid";
 import { StoreKey } from "../constant";
-import { getLang } from "../locales";
 import { createPersistStore } from "../utils/store";
 
 export interface Prompt {
@@ -120,6 +119,20 @@ export const usePromptStore = createPersistStore(
       prompts[id] = prompt;
       set(() => ({ prompts }));
       SearchService.add(prompt);
+
+      // 发送全量更新到 API
+      fetch("/api/prompts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          Object.values(prompts).map((p) => ({
+            title: p.title,
+            content: p.content,
+          })),
+        ),
+      });
     },
 
     search(text: string) {
@@ -159,30 +172,21 @@ export const usePromptStore = createPersistStore(
       fetch(PROMPT_URL)
         .then((res) => res.json())
         .then((res) => {
-          let fetchPrompts = [res.en, res.tw, res.cn];
-          if (getLang() === "cn") {
-            fetchPrompts = fetchPrompts.reverse();
-          }
-          const builtinPrompts = fetchPrompts.map((promptList: PromptList) => {
-            return promptList.map(
-              ([title, content]) =>
-                ({
-                  id: nanoid(),
-                  title,
-                  content,
-                  createdAt: Date.now(),
-                }) as Prompt,
-            );
+          const builtinPrompts: Prompt[] = (res ?? []).map((prompt: Prompt) => {
+            return {
+              id: nanoid(),
+              title: prompt.title,
+              content: prompt.content,
+              createdAt: Date.now(),
+            } as Prompt;
           });
 
           const userPrompts = usePromptStore.getState().getUserPrompts() ?? [];
 
           const allPromptsForSearch = builtinPrompts
-            .reduce((pre, cur) => pre.concat(cur), [])
             .filter((v) => !!v.title && !!v.content)
             .map((v) => ({ ...v, isUser: true }));
-          SearchService.count.builtin =
-            res.en.length + res.cn.length + res.tw.length;
+          SearchService.count.builtin = builtinPrompts.length;
 
           const finalPrompts = [...allPromptsForSearch, ...userPrompts];
           SearchService.init([], finalPrompts);
