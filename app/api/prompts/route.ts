@@ -1,23 +1,15 @@
+import { sql } from "@vercel/postgres";
+import console from "console";
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 
 async function handle(req: NextRequest) {
   if (req.method === "POST") {
     try {
       // 解析请求体
       const body = await req.json();
+      const { id, title, content } = body;
 
-      // 获取 prompts.json 文件路径
-      const promptsFilePath = path.join(
-        process.cwd(),
-        "public",
-        "prompts.json",
-      );
-
-      // 直接写入新的内容，全量更新
-      fs.writeFileSync(promptsFilePath, JSON.stringify(body, null, 2));
-
+      await sql`UPDATE builtin_prompts SET title = ${title}, content = ${content} WHERE id = ${id};`;
       return NextResponse.json({ success: true });
     } catch (error) {
       console.error("Error updating prompts:", error);

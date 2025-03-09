@@ -120,18 +120,10 @@ export const usePromptStore = createPersistStore(
       set(() => ({ prompts }));
       SearchService.add(prompt);
 
-      // 发送全量更新到 API
+      // 更新到数据库
       fetch("/api/prompts", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(
-          Object.values(prompts).map((p) => ({
-            title: p.title,
-            content: p.content,
-          })),
-        ),
+        body: JSON.stringify(prompt),
       });
     },
 
@@ -165,33 +157,24 @@ export const usePromptStore = createPersistStore(
         return;
       }
 
-      const PROMPT_URL = "./prompts.json";
-
-      type PromptList = Array<[string, string]>;
-
-      fetch(PROMPT_URL)
+      // Fetch built-in prompts from Vercel Postgres API endpoint
+      fetch("/api/prompts/builtin")
         .then((res) => res.json())
         .then((res) => {
+          console.log("res", res);
           const builtinPrompts: Prompt[] = (res ?? []).map((prompt: Prompt) => {
             return {
-              id: nanoid(),
+              id: prompt.id,
               title: prompt.title,
               content: prompt.content,
               createdAt: Date.now(),
+              isUser: true,
             } as Prompt;
           });
 
-          const userPrompts = usePromptStore.getState().getUserPrompts() ?? [];
-
-          const allPromptsForSearch = builtinPrompts
-            .filter((v) => !!v.title && !!v.content)
-            .map((v) => ({ ...v, isUser: true }));
-          SearchService.count.builtin = builtinPrompts.length;
-
-          const finalPrompts = [...allPromptsForSearch, ...userPrompts];
-          SearchService.init([], finalPrompts);
+          SearchService.init([], builtinPrompts);
           usePromptStore.setState({
-            prompts: finalPrompts.reduce(
+            prompts: builtinPrompts.reduce(
               (pre, cur) => {
                 pre[cur.id] = cur;
                 return pre;
